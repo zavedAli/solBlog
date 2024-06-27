@@ -12,7 +12,7 @@ import idl from "src/idl.json";
 import { findProgramAddressSync } from "@project-serum/anchor/dist/cjs/utils/pubkey";
 import { utf8 } from "@project-serum/anchor/dist/cjs/utils/bytes";
 import { PostForm } from "src/components/PostForm";
-import { Buffer } from "buffer"; // Import the Buffer polyfill
+import { Buffer } from "buffer";
 
 const BlogContext = createContext();
 
@@ -27,7 +27,7 @@ export const useBlog = () => {
 };
 
 export const BlogProvider = ({ children }) => {
-  const [user, setUser] = useState(null);
+  const [user, setUser] = useState();
   const [initialized, setInitialized] = useState(false);
   const [transactionPending, setTransactionPending] = useState(false);
   const [showModal, setShowModal] = useState(false);
@@ -61,18 +61,20 @@ export const BlogProvider = ({ children }) => {
           if (user) {
             setInitialized(true);
             setUser(user);
-            setLastPostId(user.lastPostId.toNumber());
+            setLastPostId(user.lastPostId);
             const postData = await program.account.postAccount.all();
-            setPosts(postData.map((post) => post.account));
+            setPosts(postData);
+            console.log(postData);
           }
         } catch (err) {
           console.log("No user found:", err);
           setInitialized(false);
+        } finally {
         }
       }
     };
     start();
-  }, [program, publicKey]);
+  }, [program, publicKey, setTransactionPending]);
 
   const initUser = async () => {
     if (program && publicKey) {
@@ -113,7 +115,7 @@ export const BlogProvider = ({ children }) => {
           [
             utf8.encode("post"),
             publicKey.toBuffer(),
-            new Uint8Array([lastPostId]),
+            Uint8Array.from([lastPostId]),
           ],
           program.programId
         );
@@ -128,7 +130,7 @@ export const BlogProvider = ({ children }) => {
           .rpc();
         setShowModal(false);
       } catch (err) {
-        console.log("Error creating post:", err);
+        console.log(err);
       } finally {
         setTransactionPending(false);
       }

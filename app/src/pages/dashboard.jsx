@@ -68,13 +68,18 @@ export const Dashboard = () => {
                 </Button>
               ) : (
                 <Button
-                  className="ml-3 mr-2"
+                  className="ml-1 mr-1"
                   onClick={() => {
                     initUser();
                   }}
                 >
                   Initialize User
                 </Button>
+              )}
+              {initialized ? (
+                <Button className="ml-3 mr-2">Disconnect</Button>
+              ) : (
+                <div></div>
               )}
             </div>
           ) : (

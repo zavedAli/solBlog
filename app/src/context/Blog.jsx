@@ -12,6 +12,7 @@ import idl from "src/idl.json";
 import { findProgramAddressSync } from "@project-serum/anchor/dist/cjs/utils/pubkey";
 import { utf8 } from "@project-serum/anchor/dist/cjs/utils/bytes";
 import { PostForm } from "src/components/PostForm";
+import { Buffer } from "buffer"; // Import the Buffer polyfill
 
 const BlogContext = createContext();
 
@@ -26,7 +27,7 @@ export const useBlog = () => {
 };
 
 export const BlogProvider = ({ children }) => {
-  const [user, setUser] = useState();
+  const [user, setUser] = useState(null);
   const [initialized, setInitialized] = useState(false);
   const [transactionPending, setTransactionPending] = useState(false);
   const [showModal, setShowModal] = useState(false);
@@ -60,20 +61,18 @@ export const BlogProvider = ({ children }) => {
           if (user) {
             setInitialized(true);
             setUser(user);
-            setLastPostId(user.lastPostId);
+            setLastPostId(user.lastPostId.toNumber());
             const postData = await program.account.postAccount.all();
-            setPosts(postData);
-            console.log(postData);
+            setPosts(postData.map((post) => post.account));
           }
         } catch (err) {
           console.log("No user found:", err);
           setInitialized(false);
-        } finally {
         }
       }
     };
     start();
-  }, [program, publicKey, setTransactionPending]);
+  }, [program, publicKey]);
 
   const initUser = async () => {
     if (program && publicKey) {
@@ -114,7 +113,7 @@ export const BlogProvider = ({ children }) => {
           [
             utf8.encode("post"),
             publicKey.toBuffer(),
-            Uint8Array.from([lastPostId]),
+            new Uint8Array([lastPostId]),
           ],
           program.programId
         );
@@ -129,7 +128,7 @@ export const BlogProvider = ({ children }) => {
           .rpc();
         setShowModal(false);
       } catch (err) {
-        console.log(err);
+        console.log("Error creating post:", err);
       } finally {
         setTransactionPending(false);
       }
